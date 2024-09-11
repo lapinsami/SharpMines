@@ -3,32 +3,20 @@
 class Program
 {
     // 40 by 12 field
-    static void Main(string[] args)
+    private static void Main(string[] args)
     {
         string line = "########################################";
 
         for (int i = 0; i < 12; i++)
         {
-            foreach (char c in line)
-            {
-                Console.Write(c + " ");
-            }
+            PrintLine(line);
             Console.Write("\n");
         }
     }
 
-    static void PrintSquare(string backgroundColor, string textColor, char symbol)
+    private static void PrintSquare(char symbol, string color)
     {
-        if (backgroundColor == "gray")
-        {
-            Console.BackgroundColor = ConsoleColor.Gray;
-        }
-        else
-        {
-            Console.BackgroundColor = ConsoleColor.Black;
-        }
-        
-        if (textColor == "red")
+        if (color == "red")
         {
             Console.ForegroundColor = ConsoleColor.Red;
         }
@@ -38,5 +26,17 @@ class Program
         }
 
         Console.Write(symbol);
+    }
+
+    private static void PrintLine(string line)
+    {
+        for (int j = 0; j < line.Length; j++)
+        {
+            PrintSquare(line[j], "red");
+            if (j < line.Length - 1)
+            {
+                Console.Write(" ");
+            }
+        }
     }
 }
