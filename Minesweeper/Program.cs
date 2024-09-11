@@ -5,7 +5,28 @@ class Program
     // 40 by 12 field
     private static void Main()
     {
-        PrintDisplay(InitializeDisplay(40, 12));
+        int width = 40;
+        int height = 12;
+        
+        char[][] gameField = InitializeGamefield(width, height);
+        
+        gameField[3][4] = 'F';
+        gameField[10][2] = 'F';
+        gameField[1][7] = 'F';
+        gameField[4][3] = 'F';
+        gameField[6][10] = 'F';
+        
+        gameField[1][1] = '1';
+        gameField[1][2] = '2';
+        gameField[1][3] = '3';
+        gameField[1][4] = '4';
+        gameField[1][5] = '5';
+        gameField[1][6] = '6';
+        
+        gameField[3][6] = 'o';
+        
+        PrintDisplay(gameField);
+        
     }
 
     private static void PrintSquare(char symbol)
@@ -35,7 +56,7 @@ class Program
             case '5':
                 Console.ForegroundColor = ConsoleColor.Magenta;
                 break;
-            case '6':
+            default:
                 Console.ForegroundColor = ConsoleColor.Cyan;
                 break;
         }
@@ -44,7 +65,7 @@ class Program
         Console.ResetColor();
     }
 
-    private static void PrintLine(string line)
+    private static void PrintLine(char[] line)
     {
         for (int j = 0; j < line.Length; j++)
         {
@@ -56,30 +77,30 @@ class Program
         }
     }
 
-    private static void PrintDisplay(string[] lines)
+    private static void PrintDisplay(char[][] lines)
     {
-        foreach (string line in lines)
+        foreach (char[] line in lines)
         {
             PrintLine(line);
             Console.Write("\n");
         }
     }
 
-    private static string[] InitializeDisplay(int width, int height)
+    private static char[][] InitializeGamefield(int width, int height)
     {
-        string[] rowArray = new string[height];
+        char[][] rows = new char[height][];
         
         for (int i = 0; i < height; i++)
         {
-            string row = "";
+            char[] row = new char[width];
             for (int j = 0; j < width; j++)
             {
-                row += "#";
+                row[j] = ' ';
             }
-            
-            rowArray[i] = row;
+
+            rows[i] = row;
         }
 
-        return rowArray;
+        return rows;
     }
 }
