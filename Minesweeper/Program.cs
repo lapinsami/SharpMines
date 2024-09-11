@@ -42,6 +42,8 @@ class Program
             {
                 break;
             }
+
+            selection = UpdateSelection(selection, input, width, height);
         }
     }
 
@@ -129,6 +131,49 @@ class Program
 
     private static ConsoleKey GetInputKey()
     {
-        return Console.ReadKey(true).Key;
+        ConsoleKey[] allowedInputs =
+        [
+            ConsoleKey.Q,
+            ConsoleKey.UpArrow,
+            ConsoleKey.DownArrow,
+            ConsoleKey.LeftArrow,
+            ConsoleKey.RightArrow,
+            ConsoleKey.F,
+            ConsoleKey.Spacebar
+        ];
+        
+        while (true)
+        {
+            ConsoleKey input = Console.ReadKey(true).Key;
+
+            if (allowedInputs.Contains(input))
+            {
+                return input;
+            }
+        }
+    }
+
+    private static int[] UpdateSelection(int[] selection, ConsoleKey pressedKey, int width, int height)
+    {
+        switch (pressedKey)
+        {
+            case ConsoleKey.UpArrow:
+                if (selection[0] > 0) selection[0] -= 1;
+                break;
+            
+            case ConsoleKey.DownArrow:
+                if (selection[0] < height - 1) selection[0] += 1;
+                break;
+            
+            case ConsoleKey.LeftArrow:
+                if (selection[1] > 0) selection[1] -= 1;
+                break;
+            
+            case ConsoleKey.RightArrow:
+                if (selection[1] < width - 1) selection[1] += 1;
+                break;
+        }
+
+        return selection;
     }
 }
