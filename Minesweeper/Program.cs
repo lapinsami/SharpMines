@@ -3,9 +3,9 @@
 class Program
 {
     // 40 by 12 field
-    private static void Main(string[] args)
+    private static void Main()
     {
-        string line = "########################################";
+        PrintDisplay(InitializeDisplay(40, 12));
     }
 
     private static void PrintSquare(char symbol, string color)
@@ -41,5 +41,23 @@ class Program
             PrintLine(line);
             Console.Write("\n");
         }
+    }
+
+    private static string[] InitializeDisplay(int width, int height)
+    {
+        string[] rowArray = new string[height];
+        
+        for (int i = 0; i < height; i++)
+        {
+            string row = "";
+            for (int j = 0; j < width; j++)
+            {
+                row += "#";
+            }
+            
+            rowArray[i] = row;
+        }
+
+        return rowArray;
     }
 }
