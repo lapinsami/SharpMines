@@ -6,12 +6,6 @@ class Program
     private static void Main(string[] args)
     {
         string line = "########################################";
-
-        for (int i = 0; i < 12; i++)
-        {
-            PrintLine(line);
-            Console.Write("\n");
-        }
     }
 
     private static void PrintSquare(char symbol, string color)
@@ -37,6 +31,15 @@ class Program
             {
                 Console.Write(" ");
             }
+        }
+    }
+
+    private static void PrintDisplay(string[] lines)
+    {
+        foreach (string line in lines)
+        {
+            PrintLine(line);
+            Console.Write("\n");
         }
     }
 }
