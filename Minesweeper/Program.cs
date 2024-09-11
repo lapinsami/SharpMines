@@ -12,11 +12,11 @@ class Program
         int[] selection = [6, 20];
         char[][] gameField = InitializeGamefield(width, height);
         
-        gameField[3][4] = 'F';
-        gameField[10][2] = 'F';
-        gameField[1][7] = 'F';
-        gameField[4][3] = 'F';
-        gameField[6][10] = 'F';
+        gameField[3][4] = '¶';
+        gameField[10][2] = '¶';
+        gameField[1][7] = '¶';
+        gameField[4][3] = '¶';
+        gameField[6][10] = '¶';
         gameField[1][1] = '1';
         gameField[1][2] = '2';
         gameField[1][3] = '3';
@@ -24,6 +24,8 @@ class Program
         gameField[1][5] = '5';
         gameField[1][6] = '6';
         gameField[3][6] = 'o';
+
+        gameField = PutBombsOnGamefield(gameField, 50);
 
         int frameCounter = 0;
         
@@ -45,7 +47,7 @@ class Program
             switch (input)
             {
                 case ConsoleKey.F:
-                    gameField[selection[0]][selection[1]] = 'F';
+                    gameField[selection[0]][selection[1]] = '¶';
                     break;
                 case ConsoleKey.Spacebar:
                     gameField[selection[0]][selection[1]] = 'o';
@@ -65,9 +67,13 @@ class Program
                 Console.ForegroundColor = ConsoleColor.Black;
                 Console.BackgroundColor = ConsoleColor.Red;
                 break;
-            case 'F':
+            case '¶':
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.BackgroundColor = ConsoleColor.DarkGray;
+                break;
+            case '#':
+                Console.ForegroundColor = ConsoleColor.DarkGray;
+                Console.BackgroundColor = ConsoleColor.Black;
                 break;
             case '1':
                 Console.ForegroundColor = ConsoleColor.DarkBlue;
@@ -130,13 +136,34 @@ class Program
             char[] row = new char[width];
             for (int j = 0; j < width; j++)
             {
-                row[j] = ' ';
+                row[j] = '#';
             }
 
             rows[i] = row;
         }
 
         return rows;
+    }
+
+    private static char[][] PutBombsOnGamefield(char[][] gamefield, int numberOfBombs)
+    {
+        Random rng = new();
+        
+        for (int i = 0; i < numberOfBombs; i++)
+        {
+            while (true)
+            {
+                int randomRow = rng.Next(gamefield.Length);
+                int randomColumn = rng.Next(gamefield[0].Length);
+
+                if (gamefield[randomRow][randomColumn] != 'o')
+                {
+                    gamefield[randomRow][randomColumn] = 'o';
+                    break;
+                }
+            }
+        }
+        return gamefield;
     }
 
     private static ConsoleKey GetInputKey()
