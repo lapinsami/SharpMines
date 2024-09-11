@@ -42,8 +42,18 @@ class Program
             {
                 break;
             }
-
-            selection = UpdateSelection(selection, input, width, height);
+            switch (input)
+            {
+                case ConsoleKey.F:
+                    gameField[selection[0]][selection[1]] = 'F';
+                    break;
+                case ConsoleKey.Spacebar:
+                    gameField[selection[0]][selection[1]] = 'o';
+                    break;
+                default:
+                    selection = UpdateSelection(selection, input, width, height);
+                    break;
+            }
         }
     }
 
