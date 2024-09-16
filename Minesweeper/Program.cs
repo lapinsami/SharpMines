@@ -5,13 +5,13 @@ namespace Minesweeper;
 class Program
 {
     static int width = 40;
-    static int height = 12;
+    static int height = 16;
     static char[][] gameField = InitializeGameField();
     static bool[][] gameFieldVisibleSquares = InitializeGameFieldMask();
     static bool[][] gameFieldFlags = InitializeGameFieldMask();
     static bool[][] gameFieldCheckedSquares = InitializeGameFieldMask();
     static int[] selection = [6, 20];
-    static int numberOfBombs = 50;
+    static int numberOfBombs = 60;
 
     private static void Main()
     {
@@ -27,7 +27,7 @@ class Program
             Console.Clear();
             frameCounter++;
             Console.WriteLine("Arrow keys to move, F to flag, Spacebar to reveal and Q to quit");
-            Console.WriteLine($"Frame {frameCounter}");
+            //Console.WriteLine($"Frame {frameCounter}");
             PrintDisplay();
             
             ConsoleKey input = GetInputKey();
@@ -112,24 +112,28 @@ class Program
 
     private static void PrintLine(char[] line, int lineNumber, bool selectionOnLine = false)
     {
+        Console.Write("| ");
+        
         for (int j = 0; j < line.Length; j++)
         {
             PrintSquare(line[j], gameFieldVisibleSquares[lineNumber][j], gameFieldFlags[lineNumber][j], selectionOnLine && j == selection[1]);
-            
-            if (j < line.Length - 1)
-            {
-                Console.Write(" ");
-            }
+            Console.Write(" ");
         }
+        
+        Console.Write("|");
     }
 
     private static void PrintDisplay()
     {
+        Console.WriteLine(new string('-', gameField[0].Length * 2 + 3));
+        
         for (int i = 0; i < gameField.Length; i++)
         {
             PrintLine(gameField[i], i, selection[0] == i);
             Console.Write("\n");
         }
+        
+        Console.WriteLine(new string('-', gameField[0].Length * 2 + 3));
     }
 
     private static char[][] InitializeGameField()
