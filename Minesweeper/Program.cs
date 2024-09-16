@@ -26,6 +26,7 @@ class Program
         {
             Console.Clear();
             frameCounter++;
+            Console.WriteLine("Arrow keys to move, F to flag, Spacebar to reveal and Q to quit");
             Console.WriteLine($"Frame {frameCounter}");
             PrintDisplay();
             
@@ -38,8 +39,7 @@ class Program
             switch (input)
             {
                 case ConsoleKey.F:
-                    gameField[selection[0]][selection[1]] = '¶';
-                    gameFieldVisibleSquares[selection[0]][selection[1]] = true;
+                    gameFieldFlags[selection[0]][selection[1]] = !gameFieldFlags[selection[0]][selection[1]];
                     break;
                 case ConsoleKey.Spacebar:
                     FloodFill(selection);
@@ -51,11 +51,16 @@ class Program
         }
     }
 
-    private static void PrintSquare(char symbol, bool visible, bool selected = false)
+    private static void PrintSquare(char symbol, bool visible, bool flagged, bool selected)
     {
         if (!visible)
         {
             symbol = '#';
+        }
+
+        if (flagged)
+        {
+            symbol = '¶';
         }
         
         switch (symbol)
@@ -109,7 +114,7 @@ class Program
     {
         for (int j = 0; j < line.Length; j++)
         {
-            PrintSquare(line[j], gameFieldVisibleSquares[lineNumber][j], selectionOnLine && j == selection[1]);
+            PrintSquare(line[j], gameFieldVisibleSquares[lineNumber][j], gameFieldFlags[lineNumber][j], selectionOnLine && j == selection[1]);
             
             if (j < line.Length - 1)
             {
@@ -212,6 +217,7 @@ class Program
         }
         
         gameFieldVisibleSquares[coords[0]][coords[1]] = true;
+        gameFieldFlags[coords[0]][coords[1]] = false;
 
         if (gameFieldCheckedSquares[coords[0]][coords[1]])
         {
@@ -229,6 +235,7 @@ class Program
         if (!SelectionOutOfBounds(coords))
         {
             gameFieldVisibleSquares[coords[0]][coords[1]] = true;
+            gameFieldFlags[coords[0]][coords[1]] = false;
         }
             
         // above mid
@@ -241,6 +248,7 @@ class Program
         if (!SelectionOutOfBounds(coords))
         {
             gameFieldVisibleSquares[coords[0]][coords[1]] = true;
+            gameFieldFlags[coords[0]][coords[1]] = false;
         }
             
         // mid left
@@ -258,6 +266,7 @@ class Program
         if (!SelectionOutOfBounds(coords))
         {
             gameFieldVisibleSquares[coords[0]][coords[1]] = true;
+            gameFieldFlags[coords[0]][coords[1]] = false;
         }
             
         // bot mid
@@ -269,6 +278,7 @@ class Program
         if (!SelectionOutOfBounds(coords))
         {
             gameFieldVisibleSquares[coords[0]][coords[1]] = true;
+            gameFieldFlags[coords[0]][coords[1]] = false;
         }
             
         coords[0] = coords[0] - 1;
