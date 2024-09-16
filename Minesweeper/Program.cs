@@ -4,27 +4,30 @@ namespace Minesweeper;
 
 class Program
 {
-    // 40 by 12 field
+    static int width = 40;
+    static int height = 12;
+    static char[][] gameField = InitializeGameField();
+    static bool[][] gameFieldVisibleSquares = InitializeGameFieldMask();
+    static bool[][] gameFieldFlags = InitializeGameFieldMask();
+    static bool[][] gameFieldCheckedSquares = InitializeGameFieldMask();
+    static int[] selection = [6, 20];
+    static int numberOfBombs = 50;
+
     private static void Main()
     {
-        int width = 40;
-        int height = 12;
-        int[] selection = [6, 20];
-        char[][] gameField = InitializeGamefield(width, height);
-        bool[][] gameFieldMask = InitializeGamefieldMask(width, height);
-        gameField = PutBombsOnGamefield(gameField, 60);
-        gameField = FillNumbers(gameField);
+        PutBombsOnGameField();
+        FillNumbers();
 
         int frameCounter = 0;
         
-        PrintDisplay(gameField, gameFieldMask, selection);
+        PrintDisplay();
         
         while (true)
         {
             Console.Clear();
             frameCounter++;
             Console.WriteLine($"Frame {frameCounter}");
-            PrintDisplay(gameField, gameFieldMask, selection);
+            PrintDisplay();
             
             ConsoleKey input = GetInputKey();
 
@@ -36,13 +39,13 @@ class Program
             {
                 case ConsoleKey.F:
                     gameField[selection[0]][selection[1]] = '¶';
-                    gameFieldMask[selection[0]][selection[1]] = true;
+                    gameFieldVisibleSquares[selection[0]][selection[1]] = true;
                     break;
                 case ConsoleKey.Spacebar:
-                    (gameField, gameFieldMask) = FloodFill(gameField, gameFieldMask, selection);
+                    FloodFill(selection);
                     break;
                 default:
-                    selection = UpdateSelection(selection, input, width, height);
+                    UpdateSelection(input);
                     break;
             }
         }
@@ -102,11 +105,11 @@ class Program
         Console.ResetColor();
     }
 
-    private static void PrintLine(char[] line, bool[] mask, int selection, bool selectionOnLine = false)
+    private static void PrintLine(char[] line, int lineNumber, bool selectionOnLine = false)
     {
         for (int j = 0; j < line.Length; j++)
         {
-            PrintSquare(line[j], mask[j], selectionOnLine && j == selection);
+            PrintSquare(line[j], gameFieldVisibleSquares[lineNumber][j], selectionOnLine && j == selection[1]);
             
             if (j < line.Length - 1)
             {
@@ -115,16 +118,16 @@ class Program
         }
     }
 
-    private static void PrintDisplay(char[][] lines, bool[][] mask, int[] selection)
+    private static void PrintDisplay()
     {
-        for (int i = 0; i < lines.Length; i++)
+        for (int i = 0; i < gameField.Length; i++)
         {
-            PrintLine(lines[i], mask[i], selection[1], selection[0] == i);
+            PrintLine(gameField[i], i, selection[0] == i);
             Console.Write("\n");
         }
     }
 
-    private static char[][] InitializeGamefield(int width, int height)
+    private static char[][] InitializeGameField()
     {
         char[][] rows = new char[height][];
         
@@ -142,7 +145,7 @@ class Program
         return rows;
     }
 
-    private static bool[][] InitializeGamefieldMask(int width, int height)
+    private static bool[][] InitializeGameFieldMask()
     {
         bool[][] rows = new bool[height][];
         
@@ -160,7 +163,7 @@ class Program
         return rows;
     }
 
-    private static char[][] PutBombsOnGamefield(char[][] gamefield, int numberOfBombs)
+    private static void PutBombsOnGameField()
     {
         Random rng = new();
         
@@ -168,20 +171,19 @@ class Program
         {
             while (true)
             {
-                int randomRow = rng.Next(gamefield.Length);
-                int randomColumn = rng.Next(gamefield[0].Length);
+                int randomRow = rng.Next(gameField.Length);
+                int randomColumn = rng.Next(gameField[0].Length);
 
-                if (gamefield[randomRow][randomColumn] != 'o')
+                if (gameField[randomRow][randomColumn] != 'o')
                 {
-                    gamefield[randomRow][randomColumn] = 'o';
+                    gameField[randomRow][randomColumn] = 'o';
                     break;
                 }
             }
         }
-        return gamefield;
     }
 
-    private static char[][] FillNumbers(char[][] gameField)
+    private static void FillNumbers()
     {
         for (int row = 0; row < gameField.Length; row++)
         {
@@ -192,85 +194,96 @@ class Program
                     continue;
                 }
                 
-                int[] selection = [row, square];
-                int neighboringBombs = GetNumberOfNeighboringBombs(gameField, selection);
+                int[] coords = [row, square];
+                int neighboringBombs = GetNumberOfNeighboringBombs(coords);
                 if (neighboringBombs > 0)
                 {
                     gameField[row][square] = char.Parse(neighboringBombs.ToString());
                 }
             }
         }
-        
-        return gameField;
     }
 
-    private static (char[][], bool[][]) FloodFill(char[][] gameField, bool[][] gameFieldMask, int[] selection)
+    private static void FloodFill(int[] coords)
     {
-        if (SelectionOutOfBounds(gameField, selection))
+        if (SelectionOutOfBounds(coords))
         {
-            return (gameField, gameFieldMask);
-        }
-
-        if (gameFieldMask[selection[0]][selection[1]] == true)
-        {
-            return (gameField, gameFieldMask);
-        }
-
-        gameFieldMask[selection[0]][selection[1]] = true;
-        
-        if (gameField[selection[0]][selection[1]] == ' ')
-        {
-            // above left
-            selection[0] = selection[0] - 1;
-            selection[1] = selection[1] - 1;
-            (gameField, gameFieldMask) = FloodFill(gameField, gameFieldMask, selection);
-            
-            // above mid
-            selection[1] = selection[1] + 1;
-            (gameField, gameFieldMask) = FloodFill(gameField, gameFieldMask, selection);
-            
-            // above right
-            selection[1] = selection[1] + 1;
-            (gameField, gameFieldMask) = FloodFill(gameField, gameFieldMask, selection);
-            
-            // mid left
-            selection[0] = selection[0] + 1;
-            selection[1] = selection[1] - 2;
-            (gameField, gameFieldMask) = FloodFill(gameField, gameFieldMask, selection);
-            
-            // mid right
-            selection[1] = selection[1] + 2;
-            (gameField, gameFieldMask) = FloodFill(gameField, gameFieldMask, selection);
-            
-            // bot left
-            selection[0] = selection[0] + 1;
-            selection[1] = selection[1] - 2;
-            (gameField, gameFieldMask) = FloodFill(gameField, gameFieldMask, selection);
-            
-            // bot mid
-            selection[1] = selection[1] + 1;
-            (gameField, gameFieldMask) = FloodFill(gameField, gameFieldMask, selection);
-            
-            // bot right
-            selection[1] = selection[1] + 1;
-            (gameField, gameFieldMask) = FloodFill(gameField, gameFieldMask, selection);
-            
-            selection[0] = selection[0] - 1;
-            selection[1] = selection[1] - 1;
+            return;
         }
         
-        return (gameField, gameFieldMask);
+        gameFieldVisibleSquares[coords[0]][coords[1]] = true;
+
+        if (gameFieldCheckedSquares[coords[0]][coords[1]])
+        {
+            return;
+        }
+        
+        gameFieldCheckedSquares[coords[0]][coords[1]] = true;
+
+        if (gameField[coords[0]][coords[1]] != ' ') return;
+        
+        // above left
+        coords[0] = coords[0] - 1;
+        coords[1] = coords[1] - 1;
+
+        if (!SelectionOutOfBounds(coords))
+        {
+            gameFieldVisibleSquares[coords[0]][coords[1]] = true;
+        }
+            
+        // above mid
+        coords[1] = coords[1] + 1;
+        FloodFill(coords);
+            
+        // above right
+        coords[1] = coords[1] + 1;
+            
+        if (!SelectionOutOfBounds(coords))
+        {
+            gameFieldVisibleSquares[coords[0]][coords[1]] = true;
+        }
+            
+        // mid left
+        coords[0] = coords[0] + 1;
+        coords[1] = coords[1] - 2;
+        FloodFill(coords);
+            
+        // mid right
+        coords[1] = coords[1] + 2;
+        FloodFill(coords);
+            
+        // bot left
+        coords[0] = coords[0] + 1;
+        coords[1] = coords[1] - 2;
+        if (!SelectionOutOfBounds(coords))
+        {
+            gameFieldVisibleSquares[coords[0]][coords[1]] = true;
+        }
+            
+        // bot mid
+        coords[1] = coords[1] + 1;
+        FloodFill(coords);
+            
+        // bot right
+        coords[1] = coords[1] + 1;
+        if (!SelectionOutOfBounds(coords))
+        {
+            gameFieldVisibleSquares[coords[0]][coords[1]] = true;
+        }
+            
+        coords[0] = coords[0] - 1;
+        coords[1] = coords[1] - 1;
     }
 
-    private static int GetNumberOfNeighboringBombs(char[][] gameField, int[] selection)
+    private static int GetNumberOfNeighboringBombs(int[] coords)
     {
         int neighboringBombs = 0;
         
         // Above left
         int[] neighbor = [0, 0];
-        neighbor[0] = selection[0] - 1;
-        neighbor[1] = selection[1] - 1;
-        if (!SelectionOutOfBounds(gameField, neighbor))
+        neighbor[0] = coords[0] - 1;
+        neighbor[1] = coords[1] - 1;
+        if (!SelectionOutOfBounds(neighbor))
         {
             if (gameField[neighbor[0]][neighbor[1]] == 'o')
             {
@@ -280,7 +293,7 @@ class Program
         
         // Above mid
         neighbor[1]++;
-        if (!SelectionOutOfBounds(gameField, neighbor))
+        if (!SelectionOutOfBounds(neighbor))
         {
             if (gameField[neighbor[0]][neighbor[1]] == 'o')
             {
@@ -290,7 +303,7 @@ class Program
         
         // Above right
         neighbor[1]++;
-        if (!SelectionOutOfBounds(gameField, neighbor))
+        if (!SelectionOutOfBounds(neighbor))
         {
             if (gameField[neighbor[0]][neighbor[1]] == 'o')
             {
@@ -299,9 +312,9 @@ class Program
         }
         
         // Mid left
-        neighbor[0] = selection[0];
-        neighbor[1] = selection[1] - 1;
-        if (!SelectionOutOfBounds(gameField, neighbor))
+        neighbor[0] = coords[0];
+        neighbor[1] = coords[1] - 1;
+        if (!SelectionOutOfBounds(neighbor))
         {
             if (gameField[neighbor[0]][neighbor[1]] == 'o')
             {
@@ -310,9 +323,9 @@ class Program
         }
         
         // Mid right
-        neighbor[0] = selection[0];
-        neighbor[1] = selection[1] + 1;
-        if (!SelectionOutOfBounds(gameField, neighbor))
+        neighbor[0] = coords[0];
+        neighbor[1] = coords[1] + 1;
+        if (!SelectionOutOfBounds(neighbor))
         {
             if (gameField[neighbor[0]][neighbor[1]] == 'o')
             {
@@ -321,9 +334,9 @@ class Program
         }
         
         // Below left
-        neighbor[0] = selection[0] + 1;
-        neighbor[1] = selection[1] - 1;
-        if (!SelectionOutOfBounds(gameField, neighbor))
+        neighbor[0] = coords[0] + 1;
+        neighbor[1] = coords[1] - 1;
+        if (!SelectionOutOfBounds(neighbor))
         {
             if (gameField[neighbor[0]][neighbor[1]] == 'o')
             {
@@ -333,7 +346,7 @@ class Program
         
         // Below mid
         neighbor[1]++;
-        if (!SelectionOutOfBounds(gameField, neighbor))
+        if (!SelectionOutOfBounds(neighbor))
         {
             if (gameField[neighbor[0]][neighbor[1]] == 'o')
             {
@@ -343,7 +356,7 @@ class Program
         
         // Below right
         neighbor[1]++;
-        if (!SelectionOutOfBounds(gameField, neighbor))
+        if (!SelectionOutOfBounds(neighbor))
         {
             if (gameField[neighbor[0]][neighbor[1]] == 'o')
             {
@@ -355,12 +368,12 @@ class Program
 
     }
 
-    private static bool SelectionOutOfBounds(char[][] gameField, int[] selection)
+    private static bool SelectionOutOfBounds(int[] coords)
     {
-        return selection[0] < 0 ||
-               selection[1] < 0 ||
-               selection[0] >= gameField.Length ||
-               selection[1] >= gameField[0].Length;
+        return coords[0] < 0 ||
+               coords[1] < 0 ||
+               coords[0] >= gameField.Length ||
+               coords[1] >= gameField[0].Length;
     }
 
     private static ConsoleKey GetInputKey()
@@ -387,7 +400,7 @@ class Program
         }
     }
 
-    private static int[] UpdateSelection(int[] selection, ConsoleKey pressedKey, int width, int height)
+    private static void UpdateSelection(ConsoleKey pressedKey)
     {
         switch (pressedKey)
         {
@@ -407,7 +420,5 @@ class Program
                 if (selection[1] < width - 1) selection[1]++;
                 break;
         }
-
-        return selection;
     }
 }
