@@ -39,7 +39,7 @@ class Program
                     gameFieldMask[selection[0]][selection[1]] = true;
                     break;
                 case ConsoleKey.Spacebar:
-                    gameFieldMask[selection[0]][selection[1]] = true;
+                    (gameField, gameFieldMask) = FloodFill(gameField, gameFieldMask, selection);
                     break;
                 default:
                     selection = UpdateSelection(selection, input, width, height);
@@ -202,6 +202,64 @@ class Program
         }
         
         return gameField;
+    }
+
+    private static (char[][], bool[][]) FloodFill(char[][] gameField, bool[][] gameFieldMask, int[] selection)
+    {
+        if (SelectionOutOfBounds(gameField, selection))
+        {
+            return (gameField, gameFieldMask);
+        }
+
+        if (gameFieldMask[selection[0]][selection[1]] == true)
+        {
+            return (gameField, gameFieldMask);
+        }
+
+        gameFieldMask[selection[0]][selection[1]] = true;
+        
+        if (gameField[selection[0]][selection[1]] == ' ')
+        {
+            // above left
+            selection[0] = selection[0] - 1;
+            selection[1] = selection[1] - 1;
+            (gameField, gameFieldMask) = FloodFill(gameField, gameFieldMask, selection);
+            
+            // above mid
+            selection[1] = selection[1] + 1;
+            (gameField, gameFieldMask) = FloodFill(gameField, gameFieldMask, selection);
+            
+            // above right
+            selection[1] = selection[1] + 1;
+            (gameField, gameFieldMask) = FloodFill(gameField, gameFieldMask, selection);
+            
+            // mid left
+            selection[0] = selection[0] + 1;
+            selection[1] = selection[1] - 2;
+            (gameField, gameFieldMask) = FloodFill(gameField, gameFieldMask, selection);
+            
+            // mid right
+            selection[1] = selection[1] + 2;
+            (gameField, gameFieldMask) = FloodFill(gameField, gameFieldMask, selection);
+            
+            // bot left
+            selection[0] = selection[0] + 1;
+            selection[1] = selection[1] - 2;
+            (gameField, gameFieldMask) = FloodFill(gameField, gameFieldMask, selection);
+            
+            // bot mid
+            selection[1] = selection[1] + 1;
+            (gameField, gameFieldMask) = FloodFill(gameField, gameFieldMask, selection);
+            
+            // bot right
+            selection[1] = selection[1] + 1;
+            (gameField, gameFieldMask) = FloodFill(gameField, gameFieldMask, selection);
+            
+            selection[0] = selection[0] - 1;
+            selection[1] = selection[1] - 1;
+        }
+        
+        return (gameField, gameFieldMask);
     }
 
     private static int GetNumberOfNeighboringBombs(char[][] gameField, int[] selection)
