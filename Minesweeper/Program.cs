@@ -11,32 +11,20 @@ class Program
         int height = 12;
         int[] selection = [6, 20];
         char[][] gameField = InitializeGamefield(width, height);
-        
-        gameField[3][4] = '¶';
-        gameField[10][2] = '¶';
-        gameField[1][7] = '¶';
-        gameField[4][3] = '¶';
-        gameField[6][10] = '¶';
-        gameField[1][1] = '1';
-        gameField[1][2] = '2';
-        gameField[1][3] = '3';
-        gameField[1][4] = '4';
-        gameField[1][5] = '5';
-        gameField[1][6] = '6';
-        gameField[3][6] = 'o';
-
-        gameField = PutBombsOnGamefield(gameField, 50);
+        bool[][] gameFieldMask = InitializeGamefieldMask(width, height);
+        gameField = PutBombsOnGamefield(gameField, 60);
+        gameField = FillNumbers(gameField);
 
         int frameCounter = 0;
         
-        PrintDisplay(gameField, selection);
+        PrintDisplay(gameField, gameFieldMask, selection);
         
         while (true)
         {
             Console.Clear();
             frameCounter++;
             Console.WriteLine($"Frame {frameCounter}");
-            PrintDisplay(gameField, selection);
+            PrintDisplay(gameField, gameFieldMask, selection);
             
             ConsoleKey input = GetInputKey();
 
@@ -48,9 +36,10 @@ class Program
             {
                 case ConsoleKey.F:
                     gameField[selection[0]][selection[1]] = '¶';
+                    gameFieldMask[selection[0]][selection[1]] = true;
                     break;
                 case ConsoleKey.Spacebar:
-                    gameField[selection[0]][selection[1]] = 'o';
+                    gameFieldMask[selection[0]][selection[1]] = true;
                     break;
                 default:
                     selection = UpdateSelection(selection, input, width, height);
@@ -59,10 +48,18 @@ class Program
         }
     }
 
-    private static void PrintSquare(char symbol, bool selected = false)
+    private static void PrintSquare(char symbol, bool visible, bool selected = false)
     {
+        if (!visible)
+        {
+            symbol = '#';
+        }
+        
         switch (symbol)
         {
+            case ' ':
+                Console.ResetColor();
+                break;
             case 'o':
                 Console.ForegroundColor = ConsoleColor.Black;
                 Console.BackgroundColor = ConsoleColor.Red;
@@ -105,11 +102,11 @@ class Program
         Console.ResetColor();
     }
 
-    private static void PrintLine(char[] line, int selection, bool selectionOnLine = false)
+    private static void PrintLine(char[] line, bool[] mask, int selection, bool selectionOnLine = false)
     {
         for (int j = 0; j < line.Length; j++)
         {
-            PrintSquare(line[j], selectionOnLine && j == selection);
+            PrintSquare(line[j], mask[j], selectionOnLine && j == selection);
             
             if (j < line.Length - 1)
             {
@@ -118,11 +115,11 @@ class Program
         }
     }
 
-    private static void PrintDisplay(char[][] lines, int[] selection)
+    private static void PrintDisplay(char[][] lines, bool[][] mask, int[] selection)
     {
         for (int i = 0; i < lines.Length; i++)
         {
-            PrintLine(lines[i], selection[1], selection[0] == i);
+            PrintLine(lines[i], mask[i], selection[1], selection[0] == i);
             Console.Write("\n");
         }
     }
@@ -136,7 +133,25 @@ class Program
             char[] row = new char[width];
             for (int j = 0; j < width; j++)
             {
-                row[j] = '#';
+                row[j] = ' ';
+            }
+
+            rows[i] = row;
+        }
+
+        return rows;
+    }
+
+    private static bool[][] InitializeGamefieldMask(int width, int height)
+    {
+        bool[][] rows = new bool[height][];
+        
+        for (int i = 0; i < height; i++)
+        {
+            bool[] row = new bool[width];
+            for (int j = 0; j < width; j++)
+            {
+                row[j] = false;
             }
 
             rows[i] = row;
@@ -164,6 +179,130 @@ class Program
             }
         }
         return gamefield;
+    }
+
+    private static char[][] FillNumbers(char[][] gameField)
+    {
+        for (int row = 0; row < gameField.Length; row++)
+        {
+            for (int square = 0; square < gameField[0].Length; square++)
+            {
+                if (gameField[row][square] == 'o')
+                {
+                    continue;
+                }
+                
+                int[] selection = [row, square];
+                int neighboringBombs = GetNumberOfNeighboringBombs(gameField, selection);
+                if (neighboringBombs > 0)
+                {
+                    gameField[row][square] = char.Parse(neighboringBombs.ToString());
+                }
+            }
+        }
+        
+        return gameField;
+    }
+
+    private static int GetNumberOfNeighboringBombs(char[][] gameField, int[] selection)
+    {
+        int neighboringBombs = 0;
+        
+        // Above left
+        int[] neighbor = [0, 0];
+        neighbor[0] = selection[0] - 1;
+        neighbor[1] = selection[1] - 1;
+        if (!SelectionOutOfBounds(gameField, neighbor))
+        {
+            if (gameField[neighbor[0]][neighbor[1]] == 'o')
+            {
+                neighboringBombs++;
+            }
+        }
+        
+        // Above mid
+        neighbor[1]++;
+        if (!SelectionOutOfBounds(gameField, neighbor))
+        {
+            if (gameField[neighbor[0]][neighbor[1]] == 'o')
+            {
+                neighboringBombs++;
+            }
+        }
+        
+        // Above right
+        neighbor[1]++;
+        if (!SelectionOutOfBounds(gameField, neighbor))
+        {
+            if (gameField[neighbor[0]][neighbor[1]] == 'o')
+            {
+                neighboringBombs++;
+            }
+        }
+        
+        // Mid left
+        neighbor[0] = selection[0];
+        neighbor[1] = selection[1] - 1;
+        if (!SelectionOutOfBounds(gameField, neighbor))
+        {
+            if (gameField[neighbor[0]][neighbor[1]] == 'o')
+            {
+                neighboringBombs++;
+            }
+        }
+        
+        // Mid right
+        neighbor[0] = selection[0];
+        neighbor[1] = selection[1] + 1;
+        if (!SelectionOutOfBounds(gameField, neighbor))
+        {
+            if (gameField[neighbor[0]][neighbor[1]] == 'o')
+            {
+                neighboringBombs++;
+            }
+        }
+        
+        // Below left
+        neighbor[0] = selection[0] + 1;
+        neighbor[1] = selection[1] - 1;
+        if (!SelectionOutOfBounds(gameField, neighbor))
+        {
+            if (gameField[neighbor[0]][neighbor[1]] == 'o')
+            {
+                neighboringBombs++;
+            }
+        }
+        
+        // Below mid
+        neighbor[1]++;
+        if (!SelectionOutOfBounds(gameField, neighbor))
+        {
+            if (gameField[neighbor[0]][neighbor[1]] == 'o')
+            {
+                neighboringBombs++;
+            }
+        }
+        
+        // Below right
+        neighbor[1]++;
+        if (!SelectionOutOfBounds(gameField, neighbor))
+        {
+            if (gameField[neighbor[0]][neighbor[1]] == 'o')
+            {
+                neighboringBombs++;
+            }
+        }
+        
+        return neighboringBombs;
+
+    }
+
+    private static bool SelectionOutOfBounds(char[][] gameField, int[] selection)
+    {
+        return selection[0] < 0 ||
+               selection[1] < 0 ||
+               selection[0] >= gameField.Length ||
+               selection[1] >= gameField[0].Length;
     }
 
     private static ConsoleKey GetInputKey()
@@ -195,19 +334,19 @@ class Program
         switch (pressedKey)
         {
             case ConsoleKey.UpArrow:
-                if (selection[0] > 0) selection[0] -= 1;
+                if (selection[0] > 0) selection[0]--;
                 break;
             
             case ConsoleKey.DownArrow:
-                if (selection[0] < height - 1) selection[0] += 1;
+                if (selection[0] < height - 1) selection[0]++;
                 break;
             
             case ConsoleKey.LeftArrow:
-                if (selection[1] > 0) selection[1] -= 1;
+                if (selection[1] > 0) selection[1]--;
                 break;
             
             case ConsoleKey.RightArrow:
-                if (selection[1] < width - 1) selection[1] += 1;
+                if (selection[1] < width - 1) selection[1]++;
                 break;
         }
 
