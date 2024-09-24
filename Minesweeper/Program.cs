@@ -14,7 +14,7 @@ class Program
     static int selectedRow = 6;
     static int selectedColumn = 20;
     
-    static int numberOfBombs = 60;
+    static int numberOfBombs = 75;
 
     private static void Main()
     {
@@ -241,7 +241,7 @@ class Program
         // above left
         row--;
         col--;
-        FillDiagonal(row, col);
+        FloodFill(row, col);
             
         // above mid
         col++;
@@ -249,7 +249,7 @@ class Program
             
         // above right
         col++;
-        FillDiagonal(row, col);
+        FloodFill(row, col);
             
         // mid left
         row++;
@@ -263,7 +263,7 @@ class Program
         // bot left
         row++;
         col -= 2;
-        FillDiagonal(row, col);
+        FloodFill(row, col);
             
         // bot mid
         col++;
@@ -271,19 +271,7 @@ class Program
             
         // bot right
         col++;
-        FillDiagonal(row, col);
-    }
-
-    private static void FillDiagonal(int row, int col)
-    {
-        if (!SelectionOutOfBounds(row, col))
-        {
-            if (char.IsNumber(gameField[row][col]))
-            {
-                gameFieldVisibleSquares[row][col] = true;
-                gameFieldFlags[row][col] = false;
-            }
-        }
+        FloodFill(row, col);
     }
 
     private static int GetNumberOfNeighboringBombs(int row, int col)
