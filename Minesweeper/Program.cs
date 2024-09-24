@@ -10,7 +10,10 @@ class Program
     static bool[][] gameFieldVisibleSquares = InitializeGameFieldMask();
     static bool[][] gameFieldFlags = InitializeGameFieldMask();
     static bool[][] gameFieldCheckedSquares = InitializeGameFieldMask();
-    static int[] selection = [6, 20];
+    // static int[] selection = [6, 20];
+    static int selectedRow = 6;
+    static int selectedColumn = 20;
+    
     static int numberOfBombs = 60;
 
     private static void Main()
@@ -39,10 +42,10 @@ class Program
             switch (input)
             {
                 case ConsoleKey.F:
-                    gameFieldFlags[selection[0]][selection[1]] = !gameFieldFlags[selection[0]][selection[1]];
+                    gameFieldFlags[selectedRow][selectedColumn] = !gameFieldFlags[selectedRow][selectedColumn];
                     break;
                 case ConsoleKey.Spacebar:
-                    FloodFill(selection);
+                    FloodFill(selectedRow, selectedColumn);
                     break;
                 default:
                     UpdateSelection(input);
@@ -77,7 +80,7 @@ class Program
                 Console.BackgroundColor = ConsoleColor.DarkGray;
                 break;
             case '#':
-                Console.ForegroundColor = ConsoleColor.DarkGray;
+                Console.ForegroundColor = ConsoleColor.White;
                 Console.BackgroundColor = ConsoleColor.Black;
                 break;
             case '1':
@@ -116,7 +119,7 @@ class Program
         
         for (int j = 0; j < line.Length; j++)
         {
-            PrintSquare(line[j], gameFieldVisibleSquares[lineNumber][j], gameFieldFlags[lineNumber][j], selectionOnLine && j == selection[1]);
+            PrintSquare(line[j], gameFieldVisibleSquares[lineNumber][j], gameFieldFlags[lineNumber][j], selectionOnLine && j == selectedColumn);
             Console.Write(" ");
         }
         
@@ -129,7 +132,7 @@ class Program
         
         for (int i = 0; i < gameField.Length; i++)
         {
-            PrintLine(gameField[i], i, selection[0] == i);
+            PrintLine(gameField[i], i, selectedRow == i);
             Console.Write("\n");
         }
         
@@ -196,183 +199,176 @@ class Program
     {
         for (int row = 0; row < gameField.Length; row++)
         {
-            for (int square = 0; square < gameField[0].Length; square++)
+            for (int col = 0; col < gameField[0].Length; col++)
             {
-                if (gameField[row][square] == 'o')
+                if (gameField[row][col] == 'o')
                 {
                     continue;
                 }
                 
-                int[] coords = [row, square];
-                int neighboringBombs = GetNumberOfNeighboringBombs(coords);
+                int neighboringBombs = GetNumberOfNeighboringBombs(row, col);
                 if (neighboringBombs > 0)
                 {
-                    gameField[row][square] = char.Parse(neighboringBombs.ToString());
+                    gameField[row][col] = char.Parse(neighboringBombs.ToString());
                 }
             }
         }
     }
 
-    private static void FloodFill(int[] coords)
+    private static void FloodFill(int row, int col)
     {
-        if (SelectionOutOfBounds(coords))
+        
+        if (SelectionOutOfBounds(row, col))
         {
             return;
         }
         
-        gameFieldVisibleSquares[coords[0]][coords[1]] = true;
-        gameFieldFlags[coords[0]][coords[1]] = false;
-
-        if (gameFieldCheckedSquares[coords[0]][coords[1]])
+        if (gameFieldCheckedSquares[row][col])
         {
             return;
         }
         
-        gameFieldCheckedSquares[coords[0]][coords[1]] = true;
+        gameFieldCheckedSquares[row][col] = true;
+        gameFieldVisibleSquares[row][col] = true;
 
-        if (gameField[coords[0]][coords[1]] != ' ') return;
+        if (gameField[row][col] != ' ')
+        {
+            return;
+        }
+        
+        gameFieldFlags[row][col] = false;
         
         // above left
-        coords[0] = coords[0] - 1;
-        coords[1] = coords[1] - 1;
-
-        if (!SelectionOutOfBounds(coords))
-        {
-            gameFieldVisibleSquares[coords[0]][coords[1]] = true;
-            gameFieldFlags[coords[0]][coords[1]] = false;
-        }
+        row--;
+        col--;
+        FillDiagonal(row, col);
             
         // above mid
-        coords[1] = coords[1] + 1;
-        FloodFill(coords);
+        col++;
+        FloodFill(row, col);
             
         // above right
-        coords[1] = coords[1] + 1;
-            
-        if (!SelectionOutOfBounds(coords))
-        {
-            gameFieldVisibleSquares[coords[0]][coords[1]] = true;
-            gameFieldFlags[coords[0]][coords[1]] = false;
-        }
+        col++;
+        FillDiagonal(row, col);
             
         // mid left
-        coords[0] = coords[0] + 1;
-        coords[1] = coords[1] - 2;
-        FloodFill(coords);
+        row++;
+        col -= 2;
+        FloodFill(row, col);
             
         // mid right
-        coords[1] = coords[1] + 2;
-        FloodFill(coords);
+        col += 2;
+        FloodFill(row, col);
             
         // bot left
-        coords[0] = coords[0] + 1;
-        coords[1] = coords[1] - 2;
-        if (!SelectionOutOfBounds(coords))
-        {
-            gameFieldVisibleSquares[coords[0]][coords[1]] = true;
-            gameFieldFlags[coords[0]][coords[1]] = false;
-        }
+        row++;
+        col -= 2;
+        FillDiagonal(row, col);
             
         // bot mid
-        coords[1] = coords[1] + 1;
-        FloodFill(coords);
+        col++;
+        FloodFill(row, col);
             
         // bot right
-        coords[1] = coords[1] + 1;
-        if (!SelectionOutOfBounds(coords))
-        {
-            gameFieldVisibleSquares[coords[0]][coords[1]] = true;
-            gameFieldFlags[coords[0]][coords[1]] = false;
-        }
-            
-        coords[0] = coords[0] - 1;
-        coords[1] = coords[1] - 1;
+        col++;
+        FillDiagonal(row, col);
     }
 
-    private static int GetNumberOfNeighboringBombs(int[] coords)
+    private static void FillDiagonal(int row, int col)
+    {
+        if (!SelectionOutOfBounds(row, col))
+        {
+            if (char.IsNumber(gameField[row][col]))
+            {
+                gameFieldVisibleSquares[row][col] = true;
+                gameFieldFlags[row][col] = false;
+            }
+        }
+    }
+
+    private static int GetNumberOfNeighboringBombs(int row, int col)
     {
         int neighboringBombs = 0;
         
         // Above left
-        int[] neighbor = [0, 0];
-        neighbor[0] = coords[0] - 1;
-        neighbor[1] = coords[1] - 1;
-        if (!SelectionOutOfBounds(neighbor))
+        row--;
+        col--;
+        
+        if (!SelectionOutOfBounds(row, col))
         {
-            if (gameField[neighbor[0]][neighbor[1]] == 'o')
+            if (gameField[row][col] == 'o')
             {
                 neighboringBombs++;
             }
         }
         
         // Above mid
-        neighbor[1]++;
-        if (!SelectionOutOfBounds(neighbor))
+        col++;
+        if (!SelectionOutOfBounds(row, col))
         {
-            if (gameField[neighbor[0]][neighbor[1]] == 'o')
+            if (gameField[row][col] == 'o')
             {
                 neighboringBombs++;
             }
         }
         
         // Above right
-        neighbor[1]++;
-        if (!SelectionOutOfBounds(neighbor))
+        col++;
+        if (!SelectionOutOfBounds(row, col))
         {
-            if (gameField[neighbor[0]][neighbor[1]] == 'o')
+            if (gameField[row][col] == 'o')
             {
                 neighboringBombs++;
             }
         }
         
         // Mid left
-        neighbor[0] = coords[0];
-        neighbor[1] = coords[1] - 1;
-        if (!SelectionOutOfBounds(neighbor))
+        row++;
+        col -= 2;
+        if (!SelectionOutOfBounds(row, col))
         {
-            if (gameField[neighbor[0]][neighbor[1]] == 'o')
+            if (gameField[row][col] == 'o')
             {
                 neighboringBombs++;
             }
         }
         
         // Mid right
-        neighbor[0] = coords[0];
-        neighbor[1] = coords[1] + 1;
-        if (!SelectionOutOfBounds(neighbor))
+        col += 2;
+        if (!SelectionOutOfBounds(row, col))
         {
-            if (gameField[neighbor[0]][neighbor[1]] == 'o')
+            if (gameField[row][col] == 'o')
             {
                 neighboringBombs++;
             }
         }
         
         // Below left
-        neighbor[0] = coords[0] + 1;
-        neighbor[1] = coords[1] - 1;
-        if (!SelectionOutOfBounds(neighbor))
+        row++;
+        col -= 2;
+        if (!SelectionOutOfBounds(row, col))
         {
-            if (gameField[neighbor[0]][neighbor[1]] == 'o')
+            if (gameField[row][col] == 'o')
             {
                 neighboringBombs++;
             }
         }
         
         // Below mid
-        neighbor[1]++;
-        if (!SelectionOutOfBounds(neighbor))
+        col++;
+        if (!SelectionOutOfBounds(row, col))
         {
-            if (gameField[neighbor[0]][neighbor[1]] == 'o')
+            if (gameField[row][col] == 'o')
             {
                 neighboringBombs++;
             }
         }
         
         // Below right
-        neighbor[1]++;
-        if (!SelectionOutOfBounds(neighbor))
+        col++;
+        if (!SelectionOutOfBounds(row, col))
         {
-            if (gameField[neighbor[0]][neighbor[1]] == 'o')
+            if (gameField[row][col] == 'o')
             {
                 neighboringBombs++;
             }
@@ -382,12 +378,12 @@ class Program
 
     }
 
-    private static bool SelectionOutOfBounds(int[] coords)
+    private static bool SelectionOutOfBounds(int row, int col)
     {
-        return coords[0] < 0 ||
-               coords[1] < 0 ||
-               coords[0] >= gameField.Length ||
-               coords[1] >= gameField[0].Length;
+        return row < 0 ||
+               col < 0 ||
+               row >= gameField.Length ||
+               col >= gameField[0].Length;
     }
 
     private static ConsoleKey GetInputKey()
@@ -419,19 +415,32 @@ class Program
         switch (pressedKey)
         {
             case ConsoleKey.UpArrow:
-                if (selection[0] > 0) selection[0]--;
+                if (selectedRow > 0)
+                {
+                    selectedRow--;
+                }
+                
                 break;
             
             case ConsoleKey.DownArrow:
-                if (selection[0] < height - 1) selection[0]++;
+                if (selectedRow < height - 1)
+                {
+                    selectedRow++;
+                }
                 break;
             
             case ConsoleKey.LeftArrow:
-                if (selection[1] > 0) selection[1]--;
+                if (selectedColumn > 0)
+                {
+                    selectedColumn--;
+                }
                 break;
             
             case ConsoleKey.RightArrow:
-                if (selection[1] < width - 1) selection[1]++;
+                if (selectedColumn < width - 1)
+                {
+                    selectedColumn++;
+                }
                 break;
         }
     }
